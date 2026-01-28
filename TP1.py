@@ -7,7 +7,6 @@ import pandas as pd
 import numpy as np
 import streamlit as st
 
-from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
@@ -122,3 +121,4 @@ st.caption(
     "Application développée dans le cadre du TP de classification "
     "des fleurs Iris – Apprentissage automatique."
 )
+
