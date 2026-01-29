@@ -12,6 +12,7 @@ from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split
 import pickle
 import numpy as np
+import streamlit as st
 
 print("Tous les imports fonctionnent ")
 
@@ -336,3 +337,4 @@ def predict():
     return jsonify({'prediction': prediction[0]})
 if __name__ == '__main__':
     app.run(debug=True)
+
