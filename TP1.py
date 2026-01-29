@@ -1,70 +1,97 @@
-# ===============================
-# IMPORTS
-# ===============================
+# =========================================================
+# DASHBOARD STREAMLIT – CLASSIFICATION IRIS (VERSION PROPRE)
+# =========================================================
+
+# =========================
+# 1. IMPORTS
+# =========================
 import streamlit as st
 import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 
+from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.metrics import confusion_matrix, classification_report, accuracy_score
 
-# ===============================
-# CONFIG STREAMLIT
-# ===============================
-st.set_page_config(page_title="Iris Dashboard", layout="wide")
-st.title("🌸 Analyse et classification du jeu de données Iris")
+# =========================
+# 2. CONFIGURATION STREAMLIT
+# =========================
+st.set_page_config(
+    page_title="Dashboard Iris – IA",
+    page_icon="🌸",
+    layout="wide"
+)
 
-# ===============================
-# CHARGEMENT DES DONNÉES
-# ===============================
-git add Iris.csv
-git commit -m "Add iris dataset"
-git push
+st.title("🌸 Classification des fleurs Iris avec KNN")
+st.markdown("Application Streamlit pour l'analyse de données et la classification.")
+
+# =========================
+# 3. CHARGEMENT DES DONNÉES
+# =========================
 @st.cache_data
 def load_data():
-    return pd.read_csv("Iris.csv")
+    iris = load_iris(as_frame=True)
+    df = iris.frame
+    df["Species"] = df["target"].map(dict(enumerate(iris.target_names)))
+    df = df.drop("target", axis=1)
+    return df
 
 df = load_data()
-st.subheader("Aperçu du jeu de données")
+
+# =========================
+# 4. APERÇU DES DONNÉES
+# =========================
+st.subheader("📊 Aperçu du jeu de données")
 st.dataframe(df.head())
 
-# ===============================
-# STATISTIQUES DESCRIPTIVES
-# ===============================
-st.subheader("Statistiques descriptives")
-st.write(df.describe())
+st.subheader("📈 Statistiques descriptives")
+st.dataframe(df.describe())
 
-# ===============================
-# DISTRIBUTION DES CLASSES
-# ===============================
-st.subheader("Distribution des espèces")
-
+# =========================
+# 5. ANALYSE UNIVARIÉE
+# =========================
+st.subheader("📌 Répartition des espèces")
 fig, ax = plt.subplots()
 sns.countplot(x="Species", data=df, ax=ax)
+ax.set_title("Distribution des espèces d'Iris")
 st.pyplot(fig)
 
-# ===============================
-# VISUALISATION PETAL
-# ===============================
-st.subheader("Relation Petal Length / Petal Width")
+# =========================
+# 6. VARIABLES QUANTITATIVES
+# =========================
+st.subheader("📉 Histogrammes des variables quantitatives")
 
+variables = df.columns[:-1]
+
+for var in variables:
+    fig, ax = plt.subplots()
+    ax.hist(df[var], bins=20)
+    ax.set_title(f"Histogramme de {var}")
+    ax.set_xlabel(var)
+    ax.set_ylabel("Effectif")
+    st.pyplot(fig)
+
+# =========================
+# 7. ÉTUDE BIVARIÉE
+# =========================
+st.subheader("🔗 Relation Petal Length / Petal Width")
 fig, ax = plt.subplots()
-sns.scatterplot(
-    data=df,
-    x="PetalLength",
-    y="PetalWidth",
-    hue="Species",
-    ax=ax
-)
+for esp in df["Species"].unique():
+    subset = df[df["Species"] == esp]
+    ax.scatter(subset["petal length (cm)"], subset["petal width (cm)"], label=esp)
+
+ax.set_xlabel("Petal Length (cm)")
+ax.set_ylabel("Petal Width (cm)")
+ax.legend()
 st.pyplot(fig)
 
-# ===============================
-# PRÉPARATION DES DONNÉES
-# ===============================
+# =========================
+# 8. PRÉPARATION DES DONNÉES
+# =========================
 X = df.drop("Species", axis=1)
 y = df["Species"]
 
@@ -76,37 +103,34 @@ scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
-# ===============================
-# MODÈLE KNN
-# ===============================
-knn = KNeighborsClassifier(n_neighbors=3)
+# =========================
+# 9. MODÉLISATION KNN
+# =========================
+st.subheader("🤖 Modèle KNN")
+
+k = st.slider("Choisissez le nombre de voisins (k)", 1, 10, 3)
+
+knn = KNeighborsClassifier(n_neighbors=k)
 knn.fit(X_train, y_train)
+
 y_pred = knn.predict(X_test)
 
-# ===============================
-# ÉVALUATION
-# ===============================
-st.subheader("Évaluation du modèle")
-
 accuracy = accuracy_score(y_test, y_pred)
-st.success(f"Exactitude du modèle : {accuracy * 100:.2f}%")
 
-st.text("Rapport de classification")
-st.text(classification_report(y_test, y_pred))
+st.success(f"🎯 Exactitude du modèle : {accuracy * 100:.2f}%")
 
-# ===============================
-# MATRICE DE CONFUSION
-# ===============================
-st.subheader("Matrice de confusion")
+# =========================
+# 10. MATRICE DE CONFUSION
+# =========================
+st.subheader("📌 Matrice de confusion")
 
-conf_matrix = confusion_matrix(y_test, y_pred)
-
+conf_mat = confusion_matrix(y_test, y_pred)
 fig, ax = plt.subplots()
 sns.heatmap(
-    conf_matrix,
+    conf_mat,
     annot=True,
-    cmap="Blues",
     fmt="d",
+    cmap="Blues",
     xticklabels=df["Species"].unique(),
     yticklabels=df["Species"].unique(),
     ax=ax
@@ -115,19 +139,33 @@ ax.set_xlabel("Prédictions")
 ax.set_ylabel("Vraies classes")
 st.pyplot(fig)
 
-# ===============================
-# PRÉDICTION UTILISATEUR
-# ===============================
-st.subheader("Prédiction manuelle")
+# =========================
+# 11. RAPPORT DE CLASSIFICATION
+# =========================
+st.subheader("📄 Rapport de classification")
+st.text(classification_report(y_test, y_pred))
 
-sepal_length = st.number_input("Sepal Length", 0.0)
-sepal_width = st.number_input("Sepal Width", 0.0)
-petal_length = st.number_input("Petal Length", 0.0)
-petal_width = st.number_input("Petal Width", 0.0)
+# =========================
+# 12. PRÉDICTION MANUELLE
+# =========================
+st.subheader("🧪 Tester une prédiction")
 
-if st.button("Prédire l'espèce"):
-    input_data = scaler.transform([[sepal_length, sepal_width, petal_length, petal_width]])
-    prediction = knn.predict(input_data)
+col1, col2 = st.columns(2)
+
+with col1:
+    sepal_length = st.number_input("Sepal Length (cm)", 4.0, 8.0, 5.1)
+    sepal_width = st.number_input("Sepal Width (cm)", 2.0, 4.5, 3.5)
+
+with col2:
+    petal_length = st.number_input("Petal Length (cm)", 1.0, 7.0, 1.4)
+    petal_width = st.number_input("Petal Width (cm)", 0.1, 2.5, 0.2)
+
+if st.button("🔮 Prédire l'espèce"):
+    sample = np.array([[sepal_length, sepal_width, petal_length, petal_width]])
+    sample_scaled = scaler.transform(sample)
+    prediction = knn.predict(sample_scaled)
     st.info(f"🌼 Espèce prédite : **{prediction[0]}**")
 
-
+# =========================
+# FIN
+# =========================
