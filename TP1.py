@@ -21,6 +21,9 @@ st.title("🌸 Analyse et classification du jeu de données Iris")
 # ===============================
 # CHARGEMENT DES DONNÉES
 # ===============================
+git add iris.csv
+git commit -m "Add iris dataset"
+git push
 @st.cache_data
 def load_data():
     return pd.read_csv("iris.csv")
@@ -126,3 +129,4 @@ if st.button("Prédire l'espèce"):
     input_data = scaler.transform([[sepal_length, sepal_width, petal_length, petal_width]])
     prediction = knn.predict(input_data)
     st.info(f"🌼 Espèce prédite : **{prediction[0]}**")
+
